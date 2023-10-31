@@ -4,19 +4,25 @@ import 'dotenv/config';
 import type { Request, Response } from 'express';
 
 async function getUsers(req: Request, res: Response) {
+  let connection;
   try {
-    const connection = await connect();
+    connection = await connect();
     const [rows] = await connection.query('SELECT * FROM user');
     res.status(200).json(rows);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    if (connection) {
+      connection.end();
+    }
   }
 }
 
 async function getUserById(req: Request, res: Response) {
+  let connection;
   try {
-    const connection = await connect();
+    connection = await connect();
     const [rows] = await connection.query('SELECT * FROM user WHERE id = ?', [
       req.params.id,
     ]);
@@ -24,10 +30,15 @@ async function getUserById(req: Request, res: Response) {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    if (connection) {
+      connection.end();
+    }
   }
 }
 
 async function createUser(req: Request, res: Response) {
+  let connection;
   try {
     const { data } = await axios.post(
       'https://gorest.co.in/public/v2/users',
@@ -44,7 +55,7 @@ async function createUser(req: Request, res: Response) {
       }
     );
     console.log(data);
-    const connection = await connect();
+    connection = await connect();
     const [rows] = await connection.query(
       'INSERT INTO user (id, name, email, gender, status) VALUES (?, ?, ?, ?, ?)',
       [data.id, req.body.name, req.body.email, req.body.gender, req.body.status]
@@ -53,14 +64,19 @@ async function createUser(req: Request, res: Response) {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    if (connection) {
+      connection.end();
+    }
   }
 }
 
 async function updateUser(req: Request, res: Response) {
+  let connection;
   try {
-    const connection = await connect();
+    connection = await connect();
     const [rows] = await connection.query(
-      'UPDATE user name = ?, email = ?, gender = ?, status = ? WHERE id = ?',
+      'UPDATE user SET name = ?, email = ?, gender = ?, status = ? WHERE id = ?',
       [
         req.body.name,
         req.body.email,
@@ -70,9 +86,14 @@ async function updateUser(req: Request, res: Response) {
       ]
     );
     console.log(rows);
+    res.status(200).json(rows);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: 'Internal server error' });
+  } finally {
+    if (connection) {
+      connection.end();
+    }
   }
 }
 
